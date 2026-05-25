@@ -7,6 +7,7 @@ import androidx.collection.ArraySet;
 import com.winlator.core.AppUtils;
 import com.winlator.core.Bitmask;
 import com.winlator.inputcontrols.ExternalController;
+import com.winlator.plus.ExtraFeatures;
 
 import java.util.ArrayList;
 
@@ -99,6 +100,10 @@ public class Keyboard {
         if (ExternalController.isGameController(event.getDevice())) return false;
 
         int action = event.getAction();
+        boolean handled = ExtraFeatures.KeyInput.handleAndroidKeyEvent(xServer, event);
+        if (handled) {
+            return true;
+        }
         if (action == KeyEvent.ACTION_DOWN || action == KeyEvent.ACTION_UP) {
             int keyCode = event.getKeyCode();
             XKeycode xKeycode = keycodeMap[keyCode];
