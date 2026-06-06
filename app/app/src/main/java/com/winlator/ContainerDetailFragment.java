@@ -286,6 +286,13 @@ public class ContainerDetailFragment extends Fragment {
             registryEditor.setStringValue("Software\\Wine\\Direct3D", "UseGLSL", "enabled");
         }
 
+        File systemRegFile = new File(container.getRootDir(), ".wine/system.reg");
+        try (WineRegistryEditor registryEditor = new WineRegistryEditor(systemRegFile)) {
+            SeekBar sbLogPixels = view.findViewById(R.id.SBLogPixels);
+            registryEditor.setDwordValue("Software\\Microsoft\\Windows\\CurrentVersion\\FontDPI", "LogPixels", (int)sbLogPixels.getValue());
+            registryEditor.setDwordValue("Software\\Microsoft\\Windows NT\\CurrentVersion\\FontDPI", "LogPixels", (int)sbLogPixels.getValue());
+        }
+
         Spinner sWinVersion = view.findViewById(R.id.SWinVersion);
         int oldPosition = (byte)sWinVersion.getTag();
         if (oldPosition != -1) {

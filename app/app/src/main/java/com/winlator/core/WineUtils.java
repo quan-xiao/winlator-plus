@@ -1,6 +1,7 @@
 package com.winlator.core;
 
 import android.content.Context;
+import android.content.res.AssetManager;
 
 import com.winlator.container.Container;
 import com.winlator.container.Drive;
@@ -86,7 +87,10 @@ public abstract class WineUtils {
 
             File corefontsAddedFile = new File(userConfigDir, "corefonts.added");
             if (!corefontsAddedFile.isFile()) {
-                setupSystemFonts(registryEditor);
+                try (WineRegistryEditor registryEditor2 = new WineRegistryEditor(userRegFile)) {
+                    setupSystemFonts(registryEditor, registryEditor2);
+                }
+                installSystemFonts(context);
                 FileUtils.writeString(corefontsAddedFile, String.valueOf(System.currentTimeMillis()));
             }
         }
@@ -338,7 +342,7 @@ public abstract class WineUtils {
         }
     }
 
-    private static void setupSystemFonts(WineRegistryEditor registryEditor) {
+    private static void setupSystemFonts(WineRegistryEditor registryEditor, WineRegistryEditor userRegistryEditor) {
         final String[][] corefonts = {
             {"Andale Mono (TrueType)", "andalemo.ttf"},
             {"Arial (TrueType)", "arial.ttf"},
@@ -357,6 +361,25 @@ public abstract class WineUtils {
             {"Georgia Bold Italic (TrueType)", "georgiaz.ttf"},
             {"Georgia Italic (TrueType)", "georgiai.ttf"},
             {"Impact (TrueType)", "impact.ttf"},
+            {"Microsoft Sans Serif (TrueType)", "micross.ttf"},
+            {"Microsoft YaHei & Microsoft YaHei UI (TrueType)", "msyh.ttc"},
+            {"Microsoft YaHei Bold & Microsoft YaHei UI Bold (TrueType)", "msyhbd.ttc"},
+            {"Microsoft YaHei Light & Microsoft YaHei UI Light (TrueType)", "msyhl.ttc"},
+            {"Segoe UI (TrueType)", "segoeui.ttf"},
+            {"Segoe UI Black (TrueType)", "seguibl.ttf"},
+            {"Segoe UI Black Italic (TrueType)", "seguibli.ttf"},
+            {"Segoe UI Bold (TrueType)", "segoeuib.ttf"},
+            {"Segoe UI Bold Italic (TrueType)", "segoeuiz.ttf"},
+            {"Segoe UI Emoji (TrueType)", "seguiemj.ttf"},
+            {"Segoe UI Historic (TrueType)", "seguihis.ttf"},
+            {"Segoe UI Italic (TrueType)", "segoeuii.ttf"},
+            {"Segoe UI Light (TrueType)", "segoeuil.ttf"},
+            {"Segoe UI Light Italic (TrueType)", "seguili.ttf"},
+            {"Segoe UI Semibold (TrueType)", "seguisb.ttf"},
+            {"Segoe UI Semibold Italic (TrueType)", "seguisbi.ttf"},
+            {"Segoe UI Semilight (TrueType)", "segoeuisl.ttf"},
+            {"Segoe UI Semilight Italic (TrueType)", "seguisli.ttf"},
+            {"Segoe UI Symbol (TrueType)", "seguisym.ttf"},
             {"Times New Roman (TrueType)", "times.ttf"},
             {"Times New Roman Bold (TrueType)", "timesbd.ttf"},
             {"Times New Roman Bold Italic (TrueType)", "timesbi.ttf"},
@@ -375,6 +398,153 @@ public abstract class WineUtils {
         registryEditor.setStringValues("Software\\Microsoft\\Windows\\CurrentVersion\\Fonts", corefonts);
         registryEditor.setStringValues("Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts", corefonts);
 
+        final String[][] fontReplacements = {
+                {"SimSun", "Microsoft YaHei UI"},
+                {"NSimSun", "Microsoft YaHei UI"}
+        };
+        userRegistryEditor.setStringValues("Software\\Wine\\Fonts\\Replacements", fontReplacements);
+
+        final String[][] fontlinks = {
+                {"Microsoft YaHei",
+                "SEGOEUI.TTF,Segoe UI,120,80",
+                "SEGOEUI.TTF,Segoe UI",
+                "SIMSUN.TTC,SimSun",
+                "MSJH.TTC,Microsoft JhengHei,128,96",
+                "MSJH.TTC,Microsoft JhengHei",
+                "MEIRYO.TTC,Meiryo,128,85",
+                "MEIRYO.TTC,Meiryo",
+                "MALGUN.TTF,Malgun Gothic,128,96",
+                "MALGUN.TTF,Malgun Gothic",
+                "YUGOTHM.TTC,Yu Gothic UI,128,96",
+                "YUGOTHM.TTC,Yu Gothic UI"
+                },
+                {"Microsoft YaHei Bold",
+                "SEGOEUIB.TTF,Segoe UI Bold,120,80",
+                "SEGOEUIB.TTF,Segoe UI Bold",
+                "SIMSUN.TTC,SimSun",
+                "MSJHBD.TTC,Microsoft Jhenghei Bold,128,96",
+                "MSJHBD.TTC,Microsoft Jhenghei Bold",
+                "MEIRYOB.TTC,Meiryo Bold,128,85",
+                "MEIRYOB.TTC,Meiryo Bold",
+                "MALGUNBD.TTF,Malgun Gothic Bold,128,96",
+                "MALGUNBD.TTF,Malgun Gothic Bold",
+                "YUGOTHB.TTC,Yu Gothic UI Bold,128,96",
+                "YUGOTHB.TTC,Yu Gothic UI Bold"
+                },
+                {"Microsoft YaHei UI",
+                "SEGOEUI.TTF,Segoe UI,120,80",
+                "SEGOEUI.TTF,Segoe UI",
+                "SIMSUN.TTC,SimSun",
+                "MSJH.TTC,Microsoft Jhenghei UI",
+                "MEIRYO.TTC,Meiryo UI",
+                "MALGUN.TTF,Malgun Gothic,128,96",
+                "MALGUN.TTF,Malgun Gothic",
+                "YUGOTHM.TTC,Yu Gothic UI,128,96",
+                "YUGOTHM.TTC,Yu Gothic UI"
+                },
+                {"Microsoft YaHei UI Bold",
+                "SEGOEUIB.TTF,Segoe UI Bold,120,80",
+                "SEGOEUIB.TTF,Segoe UI Bold",
+                "SIMSUN.TTC,SimSun",
+                "MSJHBD.TTC,Microsoft Jhenghei UI Bold",
+                "MEIRYOB.TTC,Meiryo UI Bold",
+                "MALGUNBD.TTF,Malgun Gothic Bold,128,96",
+                "MALGUNBD.TTF,Malgun Gothic Bold",
+                "YUGOTHB.TTC,Yu Gothic UI Bold,128,96",
+                "YUGOTHB.TTC,Yu Gothic UI Bold"
+                },
+                {"Microsoft YaHei UI Light",
+                "SEGOEUIL.TTF,Segoe UI Light,120,80",
+                "SEGOEUIL.TTF,Segoe UI Light",
+                "SIMSUN.TTC,SimSun",
+                "MSJHL.TTC,Microsoft Jhenghei UI Light",
+                "MEIRYO.TTC,Meiryo UI",
+                "MALGUNSL.TTF,Malgun Gothic Semilight,128,96",
+                "MALGUNSL.TTF,Malgun Gothic Semilight",
+                "YUGOTHL.TTC,Yu Gothic UI Light,128,96",
+                "YUGOTHL.TTC,Yu Gothic UI Light"
+                },
+                {"Segoe UI",
+                "TAHOMA.TTF,Tahoma",
+                "MSYH.TTC,Microsoft YaHei UI,128,96",
+                "MSYH.TTC,Microsoft YaHei UI",
+                "MSJH.TTC,Microsoft Jhenghei UI,128,96",
+                "MSJH.TTC,Microsoft Jhenghei UI",
+                "MEIRYO.TTC,Meiryo UI,128,96",
+                "MEIRYO.TTC,Meiryo UI",
+                "SIMSUN.TTC,SimSun",
+                "MINGLIU.TTC,PMingLiU",
+                "MSGOTHIC.TTC,MS UI Gothic",
+                "MALGUN.TTF,Malgun Gothic,128,96",
+                "MALGUN.TTF,Malgun Gothic",
+                "GULIM.TTC,Gulim",
+                "YUGOTHM.TTC,Yu Gothic UI,128,96",
+                "YUGOTHM.TTC,Yu Gothic UI",
+                "SEGUISYM.TTF,Segoe UI Symbol"
+                },
+                {"Segoe UI Bold",
+                "MSYHBD.TTC,Microsoft YaHei UI Bold,128,96",
+                "MSYHBD.TTC,Microsoft YaHei UI Bold",
+                "MSJHBD.TTC,Microsoft Jhenghei UI Bold,128,96",
+                "MSJHBD.TTC,Microsoft Jhenghei UI Bold",
+                "MEIRYOB.TTC,Meiryo UI Bold,128,96",
+                "MEIRYOB.TTC,Meiryo UI Bold",
+                "MALGUNBD.TTF,Malgun Gothic Bold,128,96",
+                "MALGUNBD.TTF,Malgun Gothic Bold",
+                "YUGOTHB.TTC,Yu Gothic UI Bold,128,96",
+                "YUGOTHB.TTC,Yu Gothic UI Bold",
+                "SEGUISYM.TTF,Segoe UI Symbol"
+                },
+                {"Segoe UI Light",
+                "MSYHL.TTC,Microsoft YaHei UI Light,128,96",
+                "MSYHL.TTC,Microsoft YaHei UI Light",
+                "MSJHL.TTC,Microsoft Jhenghei UI Light,128,96",
+                "MSJHL.TTC,Microsoft Jhenghei UI Light",
+                "MEIRYO.TTC,Meiryo UI,128,96",
+                "MEIRYO.TTC,Meiryo UI",
+                "MALGUNSL.TTF,Malgun Gothic Semilight,128,96",
+                "MALGUNSL.TTF,Malgun Gothic Semilight",
+                "YUGOTHL.TTC,Yu Gothic UI Light,128,96",
+                "YUGOTHL.TTC,Yu Gothic UI Light",
+                "SEGUISYM.TTF,Segoe UI Symbol"
+                },
+                {"Segoe UI Semibold",
+                "MSYH.TTC,Microsoft YaHei UI,128,96",
+                "MSYH.TTC,Microsoft YaHei UI",
+                "MSJH.TTC,Microsoft Jhenghei UI,128,96",
+                "MSJH.TTC,Microsoft Jhenghei UI",
+                "MEIRYO.TTC,Meiryo UI,128,96",
+                "MEIRYO.TTC,Meiryo UI",
+                "MALGUN.TTF,Malgun Gothic,128,96",
+                "MALGUN.TTF,Malgun Gothic",
+                "YUGOTHB.TTC,Yu Gothic UI Semibold,128,96",
+                "YUGOTHB.TTC,Yu Gothic UI Semibold",
+                "SEGUISYM.TTF,Segoe UI Symbol"
+                },
+                {"Segoe UI Semilight",
+                "MSYH.TTC,Microsoft YaHei UI,128,96",
+                "MSYH.TTC,Microsoft YaHei UI",
+                "MSJH.TTC,Microsoft Jhenghei UI,128,96",
+                "MSJH.TTC,Microsoft Jhenghei UI",
+                "MEIRYO.TTC,Meiryo UI,128,96",
+                "MEIRYO.TTC,Meiryo UI",
+                "MALGUNSL.TTF,Malgun Gothic Semilight,128,96",
+                "MALGUNSL.TTF,Malgun Gothic Semilight",
+                "YUGOTHR.TTC,Yu Gothic UI Semilight,128,96",
+                "YUGOTHR.TTC,Yu Gothic UI Semilight",
+                "SEGUISYM.TTF,Segoe UI Symbol"
+                },
+        };
+        registryEditor.setDwordValue("Software\\Microsoft\\Windows\\CurrentVersion\\FontLink", "FontLinkCtrol", 16384);
+        registryEditor.setDwordValue("Software\\Microsoft\\Windows NT\\CurrentVersion\\FontLink","FontLinkCtrol", 16384);
+
+        registryEditor.setDwordValue("Software\\Microsoft\\Windows\\CurrentVersion\\FontLink", "FontLinkDefaultChar", 12288);
+        registryEditor.setDwordValue("Software\\Microsoft\\Windows NT\\CurrentVersion\\FontLink","FontLinkDefaultChar", 12288);
+
+        registryEditor.setMultiStringValues("Software\\Microsoft\\Windows\\CurrentVersion\\FontLink\\SystemLink", fontlinks);
+        registryEditor.setMultiStringValues("Software\\Microsoft\\Windows NT\\CurrentVersion\\FontLink\\SystemLink", fontlinks);
+
+
         final String[][] wineFonts = {
             {"Marlett (TrueType)", "Z:\\opt\\wine\\share\\wine\\fonts\\marlett.ttf"},
             {"Symbol (TrueType)", "Z:\\opt\\wine\\share\\wine\\fonts\\symbol.ttf"},
@@ -385,5 +555,19 @@ public abstract class WineUtils {
 
         registryEditor.setStringValues("Software\\Microsoft\\Windows\\CurrentVersion\\Fonts", wineFonts);
         registryEditor.setStringValues("Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts", wineFonts);
+    }
+
+    private static void installSystemFonts(Context context) {
+        File rootDir = RootFS.find(context).getRootDir();
+        File fontsDir = new File(rootDir, RootFS.WINEPREFIX+"/drive_c/windows/Fonts");
+        try {
+            AssetManager assetManager = context.getAssets();
+            String[] assetFiles = assetManager.list("fonts");
+            for (String assetFile : assetFiles) {
+                String assetPath = "fonts/"+assetFile;
+                FileUtils.copy(context, assetPath, new File(fontsDir, assetFile));
+            }
+        }
+        catch (IOException e) {}
     }
 }

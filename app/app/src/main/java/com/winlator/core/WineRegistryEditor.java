@@ -193,6 +193,59 @@ public class WineRegistryEditor implements Closeable {
         setHexValue(key, name, data.toString());
     }
 
+    public void setMultiStringValue(String key, String name, String[] values) {
+        setRawValue(key, name, encodeMultiString(name, values));
+    }
+
+    public void setMultiStringValues(String key, String[]... items) {
+        String[][] rawItems = new String[items.length][];
+        for (int i = 0; i < items.length; i++) {
+            String name = items[i][0];
+            String[] values = new String[items[i].length - 1];
+            System.arraycopy(items[i], 1, values, 0, values.length);
+            rawItems[i] = new String[]{name, encodeMultiString(name, values)};
+        }
+        setRawValues(key, rawItems);
+    }
+
+    private String encodeMultiString(String name, String[] values) {
+        byte[] bytes = multiStringToBytes(values);
+        StringBuilder data = new StringBuilder();
+        for (byte b : bytes) data.append(String.format(Locale.ENGLISH, "%02x", Byte.toUnsignedInt(b)));
+        String value = data.toString();
+
+        String prefix = "hex(7):";
+        int start = (int)Mathf.roundTo(name != null ? name.length() : 0, 2) + 10;
+        StringBuilder lines = new StringBuilder(prefix);
+        boolean firstline = true;
+        for (int i = 0, j = start; i < value.length(); i++) {
+            if (i > 0 && (i % 2) == 0) lines.append(",");
+            if (j++ > (firstline? 57:56)) {
+                lines.append("\\\n  ");
+                j = 8;
+                firstline = false;
+            }
+            lines.append(value.charAt(i));
+        }
+        return lines.toString();
+    }
+
+    private static byte[] multiStringToBytes(String[] values) {
+        int length = 0;
+        if (values != null) for (String value : values) length += (value.length() + 1) * 2;
+        length += 2;
+
+        ByteBuffer buffer = ByteBuffer.allocate(length).order(ByteOrder.LITTLE_ENDIAN);
+        if (values != null) {
+            for (String value : values) {
+                for (int i = 0; i < value.length(); i++) buffer.putChar(value.charAt(i));
+                buffer.putChar('\0');
+            }
+        }
+        buffer.putChar('\0');
+        return buffer.array();
+    }
+
     public byte[] getHexValues(String key, String name) {
         String value = getRawValue(key, name);
         if (value != null && (value.startsWith("hex:") || value.startsWith("hex("))) {

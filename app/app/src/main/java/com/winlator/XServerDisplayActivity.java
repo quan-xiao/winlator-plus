@@ -135,6 +135,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     private int frameRatingWindowId = -1;
     private Win32AppWorkarounds win32AppWorkarounds;
     private String screenEffectProfile;
+    private ProxyEditView hiddenEditText;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -271,6 +272,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         });
 
         setupUI();
+        setupKeyHandler();
 
         Executors.newSingleThreadExecutor().execute(() -> {
             if (!isGenerateWineprefix()) {
@@ -354,7 +356,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         final GLRenderer renderer = xServerView.getRenderer();
         switch (item.getItemId()) {
             case R.id.menu_item_keyboard:
-                AppUtils.showKeyboard(this);
+                hiddenEditText.showInputMethod();
                 drawerLayout.closeDrawers();
                 break;
             case R.id.menu_item_input_controls:
@@ -619,6 +621,10 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         AppUtils.observeSoftKeyboardVisibility(drawerLayout, renderer::setScreenOffsetYRelativeToCursor);
     }
 
+    private void setupKeyHandler() {
+        hiddenEditText = findViewById(R.id.HiddenEditText);
+    }
+
     private void showInputControlsDialog() {
         final ContentDialog dialog = new ContentDialog(this, R.layout.input_controls_dialog);
         dialog.setTitle(R.string.input_controls);
@@ -790,8 +796,9 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getKeyCode() < 0) return false;
         return (!inputControlsView.onKeyEvent(event) && !winHandler.onKeyEvent(event) && xServer.keyboard.onKeyEvent(event)) ||
-               (!ExternalController.isGameController(event.getDevice()) && super.dispatchKeyEvent(event));
+                (!ExternalController.isPureGameController(event.getDevice()) && super.dispatchKeyEvent(event));
     }
 
     public InputControlsView getInputControlsView() {

@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 public class Keyboard {
     public static final byte KEYSYMS_PER_KEYCODE = 2;
-    public static final short KEYS_COUNT = 248;
+    public static final short KEYS_COUNT = 500;
     public static final short MAX_KEYCODE = 255;
     public static final short MIN_KEYCODE = 8;
     public final int[] keysyms = new int[KEYS_COUNT];
@@ -37,14 +37,19 @@ public class Keyboard {
         return modifiersMask;
     }
 
+    private static int indexForKeyCode(byte keycode) {
+        int key = Byte.toUnsignedInt(keycode);
+        return key - MIN_KEYCODE;
+    }
+
     public void setKeysyms(byte keycode, int minKeysym, int majKeysym) {
-        int index = keycode - MIN_KEYCODE;
+        int index = indexForKeyCode(keycode);
         keysyms[index*KEYSYMS_PER_KEYCODE+0] = minKeysym;
         keysyms[index*KEYSYMS_PER_KEYCODE+1] = majKeysym;
     }
 
     public boolean hasKeysym(byte keycode, int keysym) {
-        int index = keycode - MIN_KEYCODE;
+        int index = indexForKeyCode(keycode);
         return keysyms[index*KEYSYMS_PER_KEYCODE+0] == keysym || keysyms[index*KEYSYMS_PER_KEYCODE+1] == keysym;
     }
 
@@ -76,6 +81,34 @@ public class Keyboard {
         }
     }
 
+    private void clearMetaKeyState(int metaState) {
+        if ((metaState & KeyEvent.META_SHIFT_LEFT_ON) != 0) {
+            modifiersMask.unset(1);
+            pressedKeys.remove(XKeycode.KEY_SHIFT_L.id);
+        } else if ((metaState & KeyEvent.META_SHIFT_RIGHT_ON) != 0) {
+            modifiersMask.unset(1);
+            pressedKeys.remove(XKeycode.KEY_SHIFT_R.id);
+        } else if ((metaState & KeyEvent.META_CAPS_LOCK_ON) != 0) {
+            modifiersMask.unset(2);
+            pressedKeys.remove(XKeycode.KEY_CAPS_LOCK.id);
+        } else if ((metaState & KeyEvent.META_CTRL_LEFT_ON) != 0) {
+            modifiersMask.unset(4);
+            pressedKeys.remove(XKeycode.KEY_CTRL_L.id);
+        } else if ((metaState & KeyEvent.META_CTRL_RIGHT_ON) != 0) {
+            modifiersMask.unset(4);
+            pressedKeys.remove(XKeycode.KEY_CTRL_R.id);
+        } else if ((metaState & KeyEvent.META_ALT_LEFT_ON) != 0) {
+            modifiersMask.unset(8);
+            pressedKeys.remove(XKeycode.KEY_ALT_L.id);
+        } else if ((metaState & KeyEvent.META_ALT_RIGHT_ON) != 0) {
+            modifiersMask.unset(8);
+            pressedKeys.remove(XKeycode.KEY_ALT_R.id);
+        } else if ((metaState & KeyEvent.META_NUM_LOCK_ON) != 0) {
+            modifiersMask.unset(16);
+            pressedKeys.remove(XKeycode.KEY_NUM_LOCK.id);
+        }
+    }
+
     public void addOnKeyboardListener(OnKeyboardListener onKeyboardListener) {
         onKeyboardListeners.add(onKeyboardListener);
     }
@@ -97,8 +130,7 @@ public class Keyboard {
     }
 
     public boolean onKeyEvent(KeyEvent event) {
-        if (ExternalController.isGameController(event.getDevice())) return false;
-
+        if (ExternalController.isPureGameController(event.getDevice())) return false;
         int action = event.getAction();
         boolean handled = ExtraFeatures.KeyInput.handleAndroidKeyEvent(xServer, event);
         if (handled) {
@@ -110,12 +142,15 @@ public class Keyboard {
             if (xKeycode == null) return false;
 
             if (action == KeyEvent.ACTION_DOWN) {
-                boolean shiftPressed = event.isShiftPressed() || keyCode == KeyEvent.KEYCODE_AT || keyCode == KeyEvent.KEYCODE_STAR || keyCode == KeyEvent.KEYCODE_POUND || keyCode == KeyEvent.KEYCODE_PLUS;
-                if (shiftPressed) xServer.injectKeyPress(XKeycode.KEY_SHIFT_L);
-                xServer.injectKeyPress(xKeycode, xKeycode != XKeycode.KEY_ENTER ? event.getUnicodeChar() : 0);
+                int keySym = xKeycode != XKeycode.KEY_ENTER ? event.getUnicodeChar() : 0;
+                if (event.getRepeatCount() > 0) {
+                    xServer.injectKeyRelease(xKeycode);
+                    xServer.injectKeyPress(xKeycode, keySym);
+                } else {
+                    xServer.injectKeyPress(xKeycode, keySym);
+                }
             }
             else if (action == KeyEvent.ACTION_UP) {
-                xServer.injectKeyRelease(XKeycode.KEY_SHIFT_L);
                 xServer.injectKeyRelease(xKeycode);
             }
         }
@@ -131,19 +166,29 @@ public class Keyboard {
         return true;
     }
 
-    private XKeycode getCustomXKeycodeForKeysym(int keysym) {
+    public XKeycode getCustomXKeycodeForKeysym(int keysym) {
         XKeycode[] customKeys = XKeycode.getCustomKeys();
         for (XKeycode xKeycode : customKeys) if (hasKeysym(xKeycode.id, keysym)) return xKeycode;
         for (XKeycode xKeycode : customKeys) {
-            int index = xKeycode.id - MIN_KEYCODE;
+            int index = indexForKeyCode(xKeycode.id);
             if (keysyms[index*KEYSYMS_PER_KEYCODE+0] == 0) return xKeycode;
         }
         for (XKeycode xKeycode : customKeys) {
-            int index = xKeycode.id - MIN_KEYCODE;
+            int index = indexForKeyCode(xKeycode.id);
             keysyms[index*KEYSYMS_PER_KEYCODE+0] = 0;
             keysyms[index*KEYSYMS_PER_KEYCODE+1] = 0;
         }
         return XKeycode.KEY_CUSTOM_1;
+    }
+
+    public void resetCustomKeysyms(int len) {
+        XKeycode[] customKeys = XKeycode.getCustomKeys();
+        int count = Math.min(customKeys.length, len);
+        for (int i= 0; i<count; i++) {
+            int index = indexForKeyCode(customKeys[i].id);
+            keysyms[index*KEYSYMS_PER_KEYCODE+0] = 0;
+            keysyms[index*KEYSYMS_PER_KEYCODE+1] = 0;
+        }
     }
 
     private static XKeycode[] createKeycodeMap() {

@@ -6,10 +6,32 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <FrameLayout
-        android:id="@+id/FLXServerDisplay"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+        <FrameLayout
+            android:id="@+id/FLXServerDisplay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </FrameLayout>
+        <!-- 其他可见UI组件 -->
+
+        <!-- 隐藏的EditText（屏幕外） -->
+        <com.winlator.ProxyEditView
+            android:id="@+id/HiddenEditText"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="-5dp"
+            android:translationX="-230dp"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:background="@null"
+            android:inputType="textMultiLine"
+            android:textColor="@android:color/transparent"
+            android:layout_centerHorizontal="true"
+            android:cursorVisible="false" />
+    </RelativeLayout>
 
     <com.google.android.material.navigation.NavigationView
         android:layout_width="wrap_content"

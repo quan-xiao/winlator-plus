@@ -1,7 +1,10 @@
 package com.winlator.plus;
 
+import android.view.InputDevice;
 import android.view.KeyEvent;
 
+import com.winlator.core.AppUtils;
+import com.winlator.xserver.Keyboard;
 import com.winlator.xserver.XKeycode;
 import com.winlator.xserver.XServer;
 
@@ -22,19 +25,24 @@ class E02_KeyInput {
         int keycode = event.getKeyCode();
         if (action == KeyEvent.ACTION_UP) {
             if (keycode == KeyEvent.KEYCODE_SPACE && lastDownKeyCode != keycode) {
-                xServer.injectKeyPress(XKeycode.KEY_SPACE, event.getUnicodeChar());
+                InputDevice device = event.getDevice();
+                if (device != null && device.isVirtual()) {
+                    xServer.injectKeyPress(XKeycode.KEY_SPACE, event.getUnicodeChar());
+                }
             }
         } else if(action == KeyEvent.ACTION_MULTIPLE) {
             String characters = event.getCharacters();
-            for (int i = 0; i < characters.codePointCount(0, characters.length()); i++) {
+            int codePointCount = characters.codePointCount(0, characters.length());
+            xServer.keyboard.resetCustomKeysyms(codePointCount);
+            for (int i = 0; i < codePointCount; i++) {
                 int keySym = characters.codePointAt(characters.offsetByCodePoints(0, i));
                 //大于0xff的，直接加上0x100,0000
                 if(keySym>0xff) keySym = keySym | 0x1000000;
 
-                xServer.injectKeyPress(stubKeyCode[currIndex], keySym);
-                xServer.injectKeyRelease(stubKeyCode[currIndex]);
-
-                currIndex = (currIndex+1)% stubKeyCode.length;//数组下标+1，为下一次设置另一个keycode做准备
+                XKeycode xKeycode = xServer.keyboard.getCustomXKeycodeForKeysym(keySym);
+                xServer.injectKeyPress(xKeycode, keySym);
+                xServer.injectKeyRelease(xKeycode);
+                //currIndex = (currIndex+1)% stubKeyCode.length;//数组下标+1，为下一次设置另一个keycode做准备
                 handled = true;
             }
         }
