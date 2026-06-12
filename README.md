@@ -2,6 +2,18 @@
 	<img src="logo.png" width="376" height="128" alt="Winlator Logo" />
 </p>
 
+#  
+# 基于winlator 11.0 的改进版本:
+- 内置主流中文字体，界面默认显示中文。
+- 支持安卓主流输入法：搜狗、百度、QQ、微信、讯飞。
+- 全面支持软键盘、实体键盘的中文输入。
+
+# 
+# An improved version based on Winlator 11.0:
+- It has built-in mainstream Chinese fonts, and the interface displays Chinese by default.
+- Supports mainstream Android input methods: Sogou, Baidu, QQ, WeChat, and Xunfei.
+- It fully supports Chinese input on both soft keyboards and physical keyboards.
+
 # Winlator
 
 Winlator is an Android application that lets you to run Windows (x86_64) applications with Wine and Box86/Box64.
