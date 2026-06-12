@@ -1,6 +1,5 @@
 package com.winlator;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Rect;
 import android.os.Build;
@@ -19,7 +18,7 @@ import androidx.appcompat.widget.AppCompatEditText;
 public class ProxyEditView extends AppCompatEditText {
 
     private InputMethodManager mInputMethodManager;
-    private Activity mActivity;
+    private XServerDisplayActivity mActivity;
 
     public ProxyEditView(Context context) {
         super(context);
@@ -37,7 +36,7 @@ public class ProxyEditView extends AppCompatEditText {
     }
 
     private void init(AttributeSet attrs) {
-        mActivity = (Activity)getContext();
+        mActivity = (XServerDisplayActivity)getContext();
 
         setFocusable(true);
         setFocusableInTouchMode(true);
@@ -55,6 +54,10 @@ public class ProxyEditView extends AppCompatEditText {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 String text = s.subSequence(start, start + count).toString();
+                if (text.equals("\n")) {
+                    sendEnterKey();
+                    return;
+                }
                 KeyEvent event = new KeyEvent(SystemClock.uptimeMillis(), text,-1, 0);
                 handleKeyEvent(event);
             }
@@ -99,7 +102,23 @@ public class ProxyEditView extends AppCompatEditText {
     }
 
     private boolean handleKeyEvent(KeyEvent event) {
-        return mActivity.dispatchKeyEvent(event);
+        return mActivity.handleKeyEvent(event, false);
+    }
+
+    private void sendEnterKey() {
+        long eventTime = SystemClock.uptimeMillis();
+        handleKeyEvent(
+                new KeyEvent(eventTime, eventTime,
+                        KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER, 0, 0,
+                        KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
+                        KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE
+                                | KeyEvent.FLAG_EDITOR_ACTION));
+        handleKeyEvent(
+                new KeyEvent(SystemClock.uptimeMillis(), eventTime,
+                        KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER, 0, 0,
+                        KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
+                        KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE
+                                | KeyEvent.FLAG_EDITOR_ACTION));
     }
 
     private boolean performEditorAction(int actionCode) {
@@ -128,19 +147,20 @@ public class ProxyEditView extends AppCompatEditText {
             return true;
         }
 
-        long eventTime = SystemClock.uptimeMillis();
-        handleKeyEvent(
-                new KeyEvent(eventTime, eventTime,
-                        KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER, 0, 0,
-                        KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
-                        KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE
-                                | KeyEvent.FLAG_EDITOR_ACTION));
-        handleKeyEvent(
-                new KeyEvent(SystemClock.uptimeMillis(), eventTime,
-                        KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER, 0, 0,
-                        KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
-                        KeyEvent.FLAG_SOFT_KEYBOARD | KeyEvent.FLAG_KEEP_TOUCH_MODE
-                                | KeyEvent.FLAG_EDITOR_ACTION));
+        sendEnterKey();
         return true;
+    }
+
+    @Override
+    public boolean dispatchKeyEventPreIme(KeyEvent event) {
+        boolean handled = super.dispatchKeyEventPreIme(event);
+        if (event.isCtrlPressed()) {
+            int keyCode = event.getKeyCode();
+            if (keyCode >= KeyEvent.KEYCODE_A && keyCode <= KeyEvent.KEYCODE_Z) {
+                handleKeyEvent(event);
+                return true;
+            }
+        }
+        return handled;
     }
 }

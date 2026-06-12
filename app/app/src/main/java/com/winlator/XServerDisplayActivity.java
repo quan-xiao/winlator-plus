@@ -136,7 +136,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
     private Win32AppWorkarounds win32AppWorkarounds;
     private String screenEffectProfile;
     private ProxyEditView hiddenEditText;
-
+    private KeyEvent lastKeyEvent = null;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         AppUtils.setActivityTheme(this);
@@ -796,9 +796,16 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        if (event.getKeyCode() < 0) return false;
-        return (!inputControlsView.onKeyEvent(event) && !winHandler.onKeyEvent(event) && xServer.keyboard.onKeyEvent(event)) ||
+        return handleKeyEvent(event, true) ||
                 (!ExternalController.isPureGameController(event.getDevice()) && super.dispatchKeyEvent(event));
+    }
+
+    public boolean handleKeyEvent(KeyEvent event, boolean fromSystem) {
+        if (lastKeyEvent == event || event.getKeyCode() < 0)  {
+            return false;
+        }
+        lastKeyEvent = event;
+        return (!inputControlsView.onKeyEvent(event) && !winHandler.onKeyEvent(event) && xServer.keyboard.onKeyEvent(event));
     }
 
     public InputControlsView getInputControlsView() {
