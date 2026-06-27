@@ -125,6 +125,8 @@ public abstract class WineUtils {
             registryEditor.setStringValue("Software\\Wine\\AddonsURL", null, "https://raw.githubusercontent.com/brunodev85/winlator/main/wine_addons/");
             registryEditor.setStringValue("Software\\Wine\\Drivers", "Graphics", "x11");
         }
+
+        installCustomWinTools(context);
     }
 
     public static void changeBrowsersRegistryKey(Container container, boolean useAndroidBrowser) {
@@ -132,7 +134,7 @@ public abstract class WineUtils {
 
         try (WineRegistryEditor registryEditor = new WineRegistryEditor(userRegFile)) {
             if (useAndroidBrowser) {
-                registryEditor.setStringValue("Software\\Wine\\WineBrowser", "Browsers", "C:\\windows\\winhandler.exe /url");
+                registryEditor.setStringValue("Software\\Wine\\WineBrowser", "Browsers", "C:\\windows\\winurlhandler.exe");
             }
             else registryEditor.setStringValue("Software\\Wine\\WineBrowser", "Browsers", "C:\\windows\\system32\\iexplore.exe");
         }
@@ -566,6 +568,20 @@ public abstract class WineUtils {
             for (String assetFile : assetFiles) {
                 String assetPath = "fonts/"+assetFile;
                 FileUtils.copy(context, assetPath, new File(fontsDir, assetFile));
+            }
+        }
+        catch (IOException e) {}
+    }
+
+    private static void installCustomWinTools(Context context) {
+        File rootDir = RootFS.find(context).getRootDir();
+        File winDir = new File(rootDir, RootFS.WINEPREFIX+"/drive_c/windows");
+        try {
+            AssetManager assetManager = context.getAssets();
+            String[] assetFiles = assetManager.list("windows_tools");
+            for (String assetFile : assetFiles) {
+                String assetPath = "windows_tools/"+assetFile;
+                FileUtils.copy(context, assetPath, new File(winDir, assetFile));
             }
         }
         catch (IOException e) {}
