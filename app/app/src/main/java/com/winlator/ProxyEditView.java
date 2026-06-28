@@ -10,9 +10,12 @@ import android.util.AttributeSet;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatEditText;
 
 public class ProxyEditView extends AppCompatEditText {
@@ -58,14 +61,31 @@ public class ProxyEditView extends AppCompatEditText {
                     sendEnterKey();
                     return;
                 }
-                KeyEvent event = new KeyEvent(SystemClock.uptimeMillis(), text,-1, 0);
-                handleKeyEvent(event);
+                postDelayed(()-> {
+                    if (ProxyEditView.this.hasComposingText()) {
+                        return;
+                    }
+                    KeyEvent event = new KeyEvent(SystemClock.uptimeMillis(), text,-1, 0);
+                    handleKeyEvent(event);
+                }, 10);
             }
 
             @Override
             public void afterTextChanged(Editable s) {
             }
         });
+    }
+
+    @Override
+    public InputConnection onCreateInputConnection(@NonNull EditorInfo outAttrs) {
+        return new ProxyConnectionWrapper(this.getContext(), super.onCreateInputConnection(outAttrs), true);
+    }
+
+    private boolean hasComposingText() {
+        Editable editable = this.getText();
+        int composingStart = BaseInputConnection.getComposingSpanStart(editable);
+        int composingEnd = BaseInputConnection.getComposingSpanEnd(editable);
+        return (composingStart >= 0 && composingEnd > composingStart);
     }
 
     @Override
@@ -78,12 +98,22 @@ public class ProxyEditView extends AppCompatEditText {
         }
     }
 
-    public void showInputMethod() {
+    public void showInputMethod(boolean restart) {
         if (!isFocused()) {
             requestFocus();
-        } else {
-            innerShowInputMethod();
         }
+        if (restart) {
+            cleanInput();
+        }
+        innerShowInputMethod();
+    }
+
+    private void cleanInput() {
+        if (this.length() > 0) {
+            this.setText("");
+        }
+        this.setSelection(0);
+        this.clearComposingText();
     }
 
     private void innerShowInputMethod() {

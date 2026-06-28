@@ -356,7 +356,7 @@ public class XServerDisplayActivity extends AppCompatActivity implements Navigat
         final GLRenderer renderer = xServerView.getRenderer();
         switch (item.getItemId()) {
             case R.id.menu_item_keyboard:
-                hiddenEditText.showInputMethod();
+                hiddenEditText.showInputMethod(true);
                 drawerLayout.closeDrawers();
                 break;
             case R.id.menu_item_input_controls:
