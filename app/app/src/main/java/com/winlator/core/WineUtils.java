@@ -134,7 +134,7 @@ public abstract class WineUtils {
 
         try (WineRegistryEditor registryEditor = new WineRegistryEditor(userRegFile)) {
             if (useAndroidBrowser) {
-                registryEditor.setStringValue("Software\\Wine\\WineBrowser", "Browsers", "C:\\windows\\winurlhandler.exe");
+                registryEditor.setStringValue("Software\\Wine\\WineBrowser", "Browsers", "C:\\windows\\winurlhelper.exe");
             }
             else registryEditor.setStringValue("Software\\Wine\\WineBrowser", "Browsers", "C:\\windows\\system32\\iexplore.exe");
         }
